@@ -14,6 +14,7 @@ except: from config import cookie_secret, client
 
 class User(db.Model):
     '''Holds the Twitter user's information. key_name = twitter username'''
+    created = db.DateTimeProperty(auto_now=True)
     name    = db.StringProperty()   # Display name for the user
     picture = db.StringProperty()   # Profile image URL
     token   = db.StringProperty()   # OAuth token
@@ -21,9 +22,10 @@ class User(db.Model):
 
 class Email(db.Model):
     '''Maps email addresses to a Twitter username. key_name = email'''
-    username = db.StringProperty()      # Twitter userid authorised for the e-mail
+    username  = db.StringProperty()     # Twitter userid authorised for the e-mail
     subscribe = db.IntegerProperty()    # Hour (GTM) to mail user. None if usubscribed
-    last_id = db.IntegerProperty()      # Last Twitter ID e-mailed to this e-mail
+    last_id   = db.IntegerProperty()    # Last Twitter ID e-mailed to this e-mail
+    last_fetch= db.DateTimeProperty(auto_now=True)
 
 
 class HomePage(webapp.RequestHandler):
