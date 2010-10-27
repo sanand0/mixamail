@@ -1,0 +1,15 @@
+Hi {% firstof handler.from_name handler.from_mail %},
+
+You just mailed us. But we're not sure we've been introduced, so here goes: We're Mixamail.
+
+Mixamail lets you access Twitter via e-mail. This is useful if you have e-mail but not Internet access (e.g. on your BlackBerry).
+
+You can update your status by mailing twitter@mixamail.com with a subject "Update". The body is your status. (We'll shorten links.)
+
+You can read tweets by sending an e-mail to twitter@mixamail.com. (Any other subject, like "fetch" is fine.)
+
+But first, you need to log in at http://www.mixamail.com and give {{ handler.from_mail }} access to your Twitter account.
+
+Enjoy!
+Mixamail
+http://www.mixamail.com/

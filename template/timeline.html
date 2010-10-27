@@ -1,0 +1,9 @@
+{% if not data.feed %}<p>No new tweets since our last e-mail.</p>{% else %}{% for entry in data.feed %}
+<p><a href="http://twitter.com/{{ entry.user.screen_name }}">{{ entry.user.name }}</a>: {{ entry.text }}
+<a href="mailto:twitter@mixamail.com?body=@{{ entry.user.screen_name }}%20&subject=Re:%20{{entry.id}}">reply</a>
+<a href="mailto:twitter@mixamail.com?subject=RT:%20{{entry.id}}">retweet</a>
+</p>
+{% endfor %}{% endif %}
+
+<p><br>Mixamail
+<br>http://www.mixamail.com/</p>

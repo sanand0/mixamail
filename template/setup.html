@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block style %}
+h3{font-weight:bold;}
+#main img{float:left;margin-right:1em;}
+#main h1{font-weight:bold;}
+h1.next{clear:both;margin-top:1em;}
+#signin{display:none;}
+section{min-width:20em;margin:1em 0;}
+ul{margin:0 0 1em 2em;}
+ul li{list-style:disc;}
+input,button{font-size:13px;}
+{% endblock %}
+
+{% block main %}
+<div class="yui3-g">
+<section class="yui3-u-1-2">
+ <p><a href="http://twitter.com/#!/{{ user.key.name }}"><img src="{{ user.picture }}"></a>
+ <h1>{{ user.name }}</h1>
+ <h2><a href="http://twitter.com/#!/{{ user.key.name }}">@{{ user.key.name }}</a></h2>
+
+ <h1 class="next">Authorised e-mail IDs</h1>
+ {% for email in emails %}<form action="" method="post"><input type="hidden" name="delete" value="{{ email.key.name }}">{{ email.key.name }} <button type="submit">X</button></form>{% endfor %}
+ <form action="" method="post"><label>E-mail: <input name="email" value="{{ user.email|default:"" }}"></label><button type="submit">Add</button></form>
+</section>
+<section class="yui3-u-1-2">
+ <h3>How do I use Mixamail?</h3>
+ <p>First, add an email ID on the left.</p>
+ <p>From this ID, mail twitter@mixamail.com with a subject:</p><ul>
+ <li><b>fetch</b>: to fetch tweets from your twitter home page</li>
+ <li><b>update</b>: to update your status</li>
+ <li><b>subscribe</b>: subscribe to daily feeds</li>
+ <li><b>unsubscribe</b>: unsubscribe from daily feeds</li>
+ <li><b>re: &lt;status&gt;</b>: to reply to a status (available on fetched tweets)</li>
+ <li><b>rt: &lt;status&gt;</b>: to retweet to a status (available on fetched tweets)</li>
+ </ul>
+ <h3>Why don't I get a reply?</h3>
+ <p>Check your junk/spam folder if you don't get a response within 60 seconds.</p>
+ <h3>How many tweets do I get?</h3>
+ <p>At most 50 tweets since the last time you e-mailed. If you use multiple email IDs, it's fine -- the tweets will continue from where they left off for your ID.</p>
+</section>
+</div>
+{% endblock %}

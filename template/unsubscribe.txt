@@ -1,0 +1,9 @@
+Hi {% firstof handler.from_name handler.from_mail %},
+
+You will no longer get daily e-mails from us, showing your friends' latest tweets (for @{{ handler.mapping.username }}).
+
+This is because you just mailed us at twitter@mixamail.com with a subject "Unsubcribe". To re-subscribe, mail twitter@mixamail.com with the subject "Subscribe".
+
+Regards
+Mixamail
+http://www.mixamail.com/

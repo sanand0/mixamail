@@ -1,0 +1,6 @@
+{% if not data.feed %}No new tweets since our last e-mail.{% else %}{% for entry in data.feed %}
+{{ entry.user.name }} (@{{ entry.user.screen_name }}): {{ entry.text }} // {{ entry.created_at }}
+{% endfor %}{% endif %}
+
+Mixamail
+http://www.mixamail.com/

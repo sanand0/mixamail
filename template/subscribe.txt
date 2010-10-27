@@ -1,0 +1,9 @@
+Hi {% firstof handler.from_name handler.from_mail %},
+
+We will send you the latest tweets for @{{ handler.mapping.username }} every day at this hour ({{ data.hour }}:00 GMT).
+
+This is because you just mailed us at twitter@mixamail.com with a subject "Subcribe". To unsubscribe, reply with the subject "Unsubscribe".
+
+Regards
+Mixamail
+http://www.mixamail.com/

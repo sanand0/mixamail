@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block style %}
+#main article{min-width:18em}
+#main h1{text-align:center;font-size:150%;text-transform:uppercase;font-weight:bold;clear:both;margin:1em 5px 1em 5px}
+#main h2{text-align:center;font-size:150%;margin:0.5em 0}
+#main img{float:left;margin-right:1em}
+#main p{margin-bottom:1em}
+b{color:#0099ca;text-decoration:none}
+.phone,.phone .edge{-webkit-border-radius:10px;-moz-border-radius:10px;border-radius:10px;}
+.phone{zoom:1;margin:0 20px;text-align:left;padding:10px;background-color:#ccc;zoom:1;
+background:-webkit-gradient(linear,0% 0%,0% 100%,from(#ccc),to(#777));
+background:-moz-linear-gradient(center top,#ccc 0%,#777 100%);
+filter:progid:DXImageTransform.Microsoft.Gradient(gradientType='0',startColorstr='#cccccc',endColorstr='#777777');
+}
+.phone .edge{background-color:#fff;zoom:1}
+.phone .addr,.phone .sub,.phone .body{padding:0 5px}
+.phone .sub{border-top:1px solid #ddd}
+.phone .body{min-height:2.5em;*height:2.5em;border-top:3px double #ddd;line-height:1.3;font-size:80%}
+.phone .body div{padding:0.5em 0}
+.symbol{font: 200% sans-serif;text-align:center;line-height:1}
+.end{text-align:center}
+.end .signin{position:static}
+{% endblock %}
+
+{% block main %}
+<h2>Access Twitter via e-mail. Just mail twitter@mixamail.com</h2>
+
+<div class="yui3-g">
+<section class="yui3-u-1-3">
+ <h1><b>Fetch</b> via e-mail</h1>
+ <div class="phone"><div class="edge">
+   <div class="addr">To: <b>twitter@mixamail.com</b>
+   <br>Cc:</div>
+   <div class="sub">Subject: <b>fetch</b></div>
+   <div class="body"></div>
+ </div></div>
+
+ <div class="symbol">&#x25bc;</div>
+
+ <div class="phone"><div class="edge">
+  <div class="addr">From: twitter@mixamail.com</div>
+  <div class="sub"><b>Re: fetch</b></div>
+  <div class="body">
+   <div><a href="http://twitter.com/richardbranson" rel="nofollow">richardbranson</a> How to succeed at failure: recognising failure and recovering from mistakes are essential skills for any entrepreneur. <a href="http://bit.ly/cdpQwd">http://bit.ly/cdpQwd</a> <a href="mailto:twitter@mixamail.com?body=@richardbranson&subject=Re:28783196952" rel="nofollow">reply</a> <a href="mailto:twitter@mixamail.com?subject=RT:28783196952" rel="nofollow">retweet</a></div>
+   <div><a href="http://twitter.com/johncmaxwell" rel="nofollow">johncmaxwell</a> Trust is like the air we breathe. When trust is present, no one notices, but when it's absent, everyone notices. -W Buffett <a href="mailto:twitter@mixamail.com?body=@johncmaxwell&subject=Re:28783314061" rel="nofollow">reply</a> <a href="mailto:twitter@mixamail.com?subject=RT:28783314061" rel="nofollow">retweet</a></div>
+  </div>
+ </div></div>
+</section>
+
+<section class="yui3-u-1-3">
+ <h1><b>Update</b> via e-mail</h1>
+ <div class="phone"><div class="edge">
+   <div class="addr">To: <b>twitter@mixamail.com</b>
+   <br>Cc:</div>
+   <div class="sub">Subject: <b>update</b></div>
+   <div class="body">Having fun at the Bahamas! When are you coming over?</div>
+ </div></div>
+
+ <div class="symbol">&#x25bc;</div>
+
+ <div class="phone"><div class="edge">
+  <div class="addr">From: twitter@mixamail.com</div>
+  <div class="sub"><b>Re: update</b></div>
+  <div class="body">
+   <div><a href="http://twitter.com/" rel="nofollow">your_name</a> Having fun at the Bahamas! When are you coming over? <a href="mailto:twitter@mixamail.com">reply</a> <a href="mailto:twitter@mixamail.com">retweet</a></div>
+  </div>
+ </div></div>
+</section>
+
+<section class="yui3-u-1-3">
+ <h1><b>Subscribe</b> to feed</h1>
+ <div class="phone"><div class="edge">
+   <div class="addr">To: <b>twitter@mixamail.com</b>
+   <br>Cc:</div>
+   <div class="sub">Subject: <b>subscribe</b></div>
+   <div class="body"></div>
+ </div></div>
+
+ <div class="symbol">&#x25bc;</div>
+
+ <div class="phone"><div class="edge">
+  <div class="addr">From: twitter@mixamail.com</div>
+  <div class="sub"><b>Re: update</b></div>
+  <div class="body">
+   <div>Hi your_name,</div>
+   <div>We will send you your friends' latest tweets every day at this hour (6:00 GMT).</div>
+   <div>This is because you mailed us with a subject "Subcribe". To unsubscribe, reply with the subject "Unsubscribe".</div>
+  </div>
+ </div></div>
+</section>
+</div>
+
+<div class="end"><a href="/auth" class="signin">Sign in to Twitter</a></div>
+
+{% endblock %}
+
