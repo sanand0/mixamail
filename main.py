@@ -7,6 +7,7 @@ from google.appengine.ext.webapp.util import login_required
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from google.appengine.api import mail, urlfetch
 from lilcookies import LilCookies   # Stores logged-in user's name via secure cookies
+from utils import shrink
 
 try: from secret_config import cookie_secret, client
 except: from config import cookie_secret, client
@@ -95,7 +96,8 @@ class MailPage(InboundMailHandler):
         self.from_name, self.from_mail = parseaddr(message.sender)
         self.to_name, self.to_mail = parseaddr(message.to)
         self.mapping = Email.get_by_key_name(self.from_mail.lower())
-        sub = message.subject
+        try: sub = message.subject
+        except: sub = ''
         if self.mapping:
             if   re.match(r'update'             , sub, re.I): self.update     (message)
             elif re.match(r'retweet.*?(\d+)$'   , sub, re.I): self.retweet    (message)
@@ -103,7 +105,7 @@ class MailPage(InboundMailHandler):
             elif re.match(r're.*?(\d+)$'        , sub, re.I): self.update     (message)
             elif re.match(r'subscribe'          , sub, re.I): self.subscribe  (message)
             elif re.match(r'unsubscribe'        , sub, re.I): self.unsubscribe(message)
-            else: self.fetch(message)
+            elif sub: self.fetch(message)
         else: self.unknown(message)
 
     def reply_template(self, message, temp, **data):
@@ -125,7 +127,7 @@ class MailPage(InboundMailHandler):
         out.subject = message.subject
         out.body    = body
         if html: out.html = html
-        if re.match(r're\W', out.subject, re.IGNORECASE):
+        if not re.match(r're\W', out.subject, re.IGNORECASE):
             out.subject = 'Re: ' + out.subject
         try: out.cc = message.cc
         except: pass
@@ -148,10 +150,7 @@ class MailPage(InboundMailHandler):
 
         if not body: return
 
-        # TODO: URL shrinking, attachments, etc.
-        body = body[:140]
-
-        params = { 'status': body }
+        params = { 'status': shrink(body, 140) }
         match = re.match(r're.*?(\d+)$', message.subject, re.I)
         if match: params['in_reply_to_status_id'] = match.group(1)
 
