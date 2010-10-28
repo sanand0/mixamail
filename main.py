@@ -7,7 +7,7 @@ from google.appengine.ext.webapp.util import login_required
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from google.appengine.api import mail, urlfetch
 from lilcookies import LilCookies   # Stores logged-in user's name via secure cookies
-from utils import shrink
+from utils import shrink, parse_feed
 
 try: from secret_config import cookie_secret, client, admins, sender_mail
 except: from config import cookie_secret, client, admins, sender_mail
@@ -93,7 +93,7 @@ class LogoutPage(webapp.RequestHandler):
 class MailPage(InboundMailHandler):
     '''Handles e-mail traffic'''
 
-    def parse(self, message):
+    def parse_cmd(self, message):
         '''Returns (command, param, body) where (command, param) is from subject,
         body is the first line in the body.'''
         try: subject = message.subject
@@ -114,7 +114,6 @@ class MailPage(InboundMailHandler):
 
         return command.lower(), param.strip(), body
 
-
     def receive(self, message):
         '''Depending on the subject, perform the appropriate action'''
         self.message = message
@@ -124,7 +123,7 @@ class MailPage(InboundMailHandler):
         if self.mapping and self.mapping.username:
             self.user = User.get_by_key_name(self.mapping.username)
 
-        command, param, body = self.parse(message)
+        command, param, body = self.parse_cmd(message)
         try:
             if       command == 'search'        : self.search(param or body)
             elif self.mapping:
@@ -176,7 +175,7 @@ class MailPage(InboundMailHandler):
             'http://api.twitter.com/1/statuses/update.json',
             self.user.token, self.user.secret, protected=True, method=urlfetch.POST,
             additional_params = params)
-        feed = json.loads(response.content)
+        feed = parse_feed(json.loads(response.content))
         self.reply_template('timeline', feed=[feed])
 
     def retweet(self, content, id):
@@ -184,7 +183,7 @@ class MailPage(InboundMailHandler):
         response = client.make_request(
             'http://api.twitter.com/1/statuses/retweet/' + id + '.json',
             self.user.token, self.user.secret, protected=True, method=urlfetch.POST)
-        feed = json.loads(response.content)
+        feed = parse_feed(json.loads(response.content))
         self.reply_template('timeline', feed=[feed])
 
     def fetch(self):
@@ -194,7 +193,7 @@ class MailPage(InboundMailHandler):
             'http://api.twitter.com/1/statuses/friends_timeline.json',
             self.user.token, self.user.secret, protected=True,
             additional_params = params)
-        feed = json.loads(response.content)
+        feed = parse_feed(json.loads(response.content))
         self.reply_template('timeline', feed=feed)
         if len(feed) > 0:
             self.mapping.last_id = feed[0]['id']
@@ -204,7 +203,7 @@ class MailPage(InboundMailHandler):
         response = client.make_request(
             'http://search.twitter.com/search.json',
             additional_params = { 'q': content, 'rpp': 50, })
-        feed = json.loads(response.content)['results']
+        feed = parse_feed(json.loads(response.content)['results'])
         self.reply_template('timeline', feed=feed)
 
     def subscribe(self):

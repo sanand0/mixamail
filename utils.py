@@ -1,5 +1,6 @@
 '''
 shrink(text, size): shrinks text to size, using URL shortening, word substitution, etc.
+parse_feed(feed): enhances feeds
 '''
 import re, urllib
 try: from secret_config import bitly
@@ -87,3 +88,18 @@ def shrink(text, size):
     if sizes(parts) > size: parts = [no_vowels_in_middle(x)     for x in parts]
 
     return no_whitespace(' '.join(parts))[:size]
+
+
+import rfc822, time, datetime
+
+def parse_feed(feed):
+    now = time.time()
+    for entry in feed:
+        t = rfc822.parsedate(entry['created_at'])
+        d = now - time.mktime(t)
+        if   d < 60     : entry['ago'] = '%.0fsec' % d
+        elif d < 3600   : entry['ago'] = '%.0fmin' % (d/60)
+        elif d < 86400  : entry['ago'] = '%.0fhr' % (d/3600)
+        elif d < 172800 : entry['ago'] = 'yest'
+        else            : entry['ago'] = datetime.datetime(*t[:6]).strftime('%d-%b')
+    return feed

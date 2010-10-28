@@ -1,5 +1,5 @@
 {% extends "base.txt" %}
 
 {% block text %}{% if not data.feed %}No new tweets since our last e-mail.{% else %}{% for entry in data.feed %}
-@{% firstof entry.from_user entry.user.screen_name %}: {{ entry.text }} // {{ entry.created_at }}
+@{% firstof entry.from_user entry.user.screen_name %}: {{ entry.text }} // {{ entry.ago }}
 {% endfor %}{% endif %}{% endblock %}
