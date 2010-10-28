@@ -1,13 +1,14 @@
 {% if not data.feed %}<p>No new tweets since our last e-mail.</p>{% else %}{% for entry in data.feed %}
-<p><a href="http://twitter.com/{{ entry.user.screen_name }}">{{ entry.user.name }}</a>: {{ entry.text }}
-<a href="mailto:twitter@mixamail.com?body=@{{ entry.user.screen_name }}%20&subject=Re:%20{{entry.id}}">reply</a>
+<p><a href="http://twitter.com/{% firstof entry.user.screen_name entry.from_user %}">{% firstof entry.user.name entry.from_user %}</a>: {{ entry.text }}
+<a href="mailto:twitter@mixamail.com?body=@{% firstof entry.user.screen_name entry.from_user %}%20&subject=Re:%20{{entry.id}}">reply</a>
 <a href="mailto:twitter@mixamail.com?subject=RT:%20{{entry.id}}">retweet</a>
 </p>
 {% endfor %}{% endif %}
 
-<p>Access Twitter via <a href="http://www.mixamail.com/">Mixamail.com</a>:
+<p>Twitter by mail:
 <a href="mailto:twitter@mixamail.com?subject=update">update</a> |
 <a href="mailto:twitter@mixamail.com?subject=fetch">fetch</a> |
+<a href="mailto:twitter@mixamail.com?subject=search">search</a> |
 <a href="mailto:twitter@mixamail.com?subject=subscribe">subscribe</a> |
 <a href="mailto:twitter@mixamail.com?subject=unsubscribe">unsubscribe</a>
 </p>

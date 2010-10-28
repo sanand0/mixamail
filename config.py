@@ -18,8 +18,9 @@ bitly = {
     'apiKey': 'bit.ly-api-key',
 }
 
-# Administrators
-admins = [ 'root.node@gmail.com' ]
+# Admin accounts
+sender_mail = 'applications-email-id@domain.com'
+admins = [ 'your-user-id@domain.com' ]
 
 # Type in a random 45+ character string and keep it a secret
 cookie_secret = '12345678-9abc-def0-1234-567890abcdef-01234567-890a'

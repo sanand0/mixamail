@@ -1,4 +1,6 @@
-Hi {% firstof handler.from_name handler.from_mail %},
+{% extends "base.txt" %}
+
+{% block text %}Hi {% firstof handler.from_name handler.from_mail %},
 
 You sent us an e-mail. I'm sorry, but we have a problem: {{ data.error }}
 
@@ -6,9 +8,5 @@ Try logging out of http://www.mixamail.com and logging in again.
 Or try again after a few minutes.
 Or just go home and visit twitter.com.
 
-Sorry :-(
-Mixamail
-http://www.mixamail.com/
-
 {% if data.exception %}PS: Here's a technical description of the error, if it makes any sense to you.
-{{ data.exception }}{% endif %}
+{{ data.exception }}{% endif %}{% endblock %}

@@ -9,8 +9,8 @@ from google.appengine.api import mail, urlfetch
 from lilcookies import LilCookies   # Stores logged-in user's name via secure cookies
 from utils import shrink
 
-try: from secret_config import cookie_secret, client, admins
-except: from config import cookie_secret, client, admins
+try: from secret_config import cookie_secret, client, admins, sender_mail
+except: from config import cookie_secret, client, admins, sender_mail
 
 class User(db.Model):
     '''Holds the Twitter user's information. key_name = twitter username'''
@@ -93,130 +93,130 @@ class LogoutPage(webapp.RequestHandler):
 class MailPage(InboundMailHandler):
     '''Handles e-mail traffic'''
 
-    def receive(self, message):
-        '''Depending on the subject, perform the appropriate action'''
-        self.from_name, self.from_mail = parseaddr(message.sender)
-        self.to_name, self.to_mail = parseaddr(message.to)
-        self.mapping = Email.get_by_key_name(self.from_mail.lower())
-        try: sub = message.subject
-        except: sub = ''
-        if self.mapping:
-            if   re.match(r'update'             , sub, re.I): self.update     (message)
-            elif re.match(r'retweet.*?(\d+)$'   , sub, re.I): self.retweet    (message)
-            elif re.match(r'rt.*?(\d+)$'        , sub, re.I): self.retweet    (message)
-            elif re.match(r're.*?(\d+)$'        , sub, re.I): self.update     (message)
-            elif re.match(r'subscribe'          , sub, re.I): self.subscribe  (message)
-            elif re.match(r'unsubscribe'        , sub, re.I): self.unsubscribe(message)
-            elif sub: self.fetch(message)
-        else: self.unknown(message)
+    def parse(self, message):
+        '''Returns (command, param, body) where (command, param) is from subject,
+        body is the first line in the body.'''
+        try: subject = message.subject
+        except: subject = ''
 
-    def reply_template(self, message, temp, **data):
-        '''Send a reply based on a specified template, passing it optional data'''
-        handler = self
-        body = template.render('template/' + temp + '.txt', locals())
-        html = template.render('template/' + temp + '.html', locals()) if \
-                os.path.exists('template/' + temp + '.html') else None
-        try: sub = message.subject
-        except: sub = 'From mixamail.com'
+        cmd_re = re.compile(r'(\w+)[^a-z0-9_@]*(.*)', re.IGNORECASE)
+        match = re.match(cmd_re, subject)
+        if not match: return (None,None)
+        command, param = match.groups()
 
-        # Log the e-mail and intended output
-        logging.info(repr([message.sender, message.to, sub, body,
-          [x.decode() for c,x in message.bodies(content_type='text/plain')],
-        ]))
-
-        # Send the reply
-        out         = mail.EmailMessage()
-        out.sender  = 'twitter@mixamail.com'
-        out.to      = message.sender
-        out.subject = sub
-        out.body    = body
-        if html: out.html = html
-        if not re.match(r're\W', out.subject, re.IGNORECASE):
-            out.subject = 'Re: ' + out.subject
-        try: out.cc = message.cc
-        except: pass
-        if admins: out.bcc = admins
-        out.send()
-
-    def unknown(self, message):
-        '''Reply with an introductory message for unknown e-mail IDs'''
-        self.reply_template(message, 'unknown')
-
-    def update(self, message):
-        '''Update user's status, or reply to an existing status'''
-        user = User.get_by_key_name(self.mapping.username)
         body = None
-        # Take the first non-empty line of the body
         for content_type, body in message.bodies(content_type='text/plain'):
             for line in body.decode().split('\n'):
                 if line.strip():
                     body = line.strip()
                     break
+            if body: break
 
-        if not body: return
+        return command.lower(), param.strip(), body
 
-        params = { 'status': shrink(body, 140) }
-        match = re.match(r're.*?(\d+)$', message.subject, re.I)
-        if match: params['in_reply_to_status_id'] = match.group(1)
 
+    def receive(self, message):
+        '''Depending on the subject, perform the appropriate action'''
+        self.message = message
+        self.from_name, self.from_mail = parseaddr(message.sender)
+        self.to_name, self.to_mail = parseaddr(message.to)
+        self.mapping = Email.get_by_key_name(self.from_mail.lower())
+        if self.mapping and self.mapping.username:
+            self.user = User.get_by_key_name(self.mapping.username)
+
+        command, param, body = self.parse(message)
         try:
-            response = client.make_request(
-                'http://api.twitter.com/1/statuses/update.json',
-                user.token, user.secret, protected=True, method=urlfetch.POST,
-                additional_params=params)
-            feed = json.loads(response.content)
-            self.reply_template(message, 'timeline', feed=[feed])
+            if       command == 'search'        : self.search(param or body)
+            elif self.mapping:
+                if   command == 'update'        : self.update(param or body)
+                elif command == 'reply'         : self.update(body, id=param)
+                elif command == 're'            : self.update(body, id=param)
+                elif command == 'retweet'       : self.retweet(body, id=param)
+                elif command == 'rt'            : self.retweet(body, id=param)
+                elif command == 'subscribe'     : self.subscribe()
+                elif command == 'unsubscribe'   : self.unsubscribe()
+                else                            : self.fetch()
+            else                                : self.reply_template('unknown')
         except Exception, e:
-            self.reply_template(message, 'error', exception = repr(e),
-                error="Twitter didn't let us send your tweet.")
+            self.reply_template('error', exception = repr(e),
+                error="Twitter didn't let us " + command)
 
-    def retweet(self, message):
-        '''Re-tweet a message'''
-        user = User.get_by_key_name(self.mapping.username)
-        match = re.match(r'rt.*?(\d+)$', message.subject, re.I)
-        if not match: return
-        try:
-            response = client.make_request(
-                'http://api.twitter.com/1/statuses/retweet/' + match.group(1) + '.json',
-                user.token, user.secret, protected=True, method=urlfetch.POST)
-            feed = json.loads(response.content)
-            self.reply_template(message, 'timeline', feed=[feed])
-        except Exception, e:
-            self.reply_template(message, 'error', exception = repr(e),
-                error="Twitter didn't let us retweet.")
+    def reply_template(self, temp, **data):
+        '''Send a reply based on a specified template, passing it optional data'''
+        handler = self
+        body = template.render('template/' + temp + '.txt', locals())
+        html = template.render('template/' + temp + '.html', locals()) if \
+                os.path.exists('template/' + temp + '.html') else None
+        try: sub = self.message.subject
+        except: sub = 'From ' + sender_mail
 
-    def fetch(self, message):
-        '''Fetch messages since last e-mail'''
-        user = User.get_by_key_name(self.mapping.username)
+        # Log the e-mail and intended output
+        logging.info(repr([self.message.sender, self.message.to, sub, body,
+          [x.decode() for c,x in self.message.bodies(content_type='text/plain')],
+        ]))
+
+        out = mail.EmailMessage(
+            sender  = sender_mail,
+            to      = self.message.sender,
+            subject = sub,
+            body    = body)
+        if html: out.html = html
+        if not re.match(r're\W', out.subject, re.IGNORECASE):
+            out.subject = 'Re: ' + out.subject
+        try: out.cc = self.message.cc
+        except: pass
+        if admins: out.bcc = admins
+        out.send()
+
+    def update(self, content, id=None):
+        if not content: return
+        params = { 'status': shrink(content, 140) }
+        if id: params['in_reply_to_status_id'] = id
+        response = client.make_request(
+            'http://api.twitter.com/1/statuses/update.json',
+            self.user.token, self.user.secret, protected=True, method=urlfetch.POST,
+            additional_params = params)
+        feed = json.loads(response.content)
+        self.reply_template('timeline', feed=[feed])
+
+    def retweet(self, content, id):
+        if not id: return
+        response = client.make_request(
+            'http://api.twitter.com/1/statuses/retweet/' + id + '.json',
+            self.user.token, self.user.secret, protected=True, method=urlfetch.POST)
+        feed = json.loads(response.content)
+        self.reply_template('timeline', feed=[feed])
+
+    def fetch(self):
         params = { 'count': 50 }
         if self.mapping.last_id: params['since_id'] = self.mapping.last_id
-        try:
-            response = client.make_request(
-                'http://api.twitter.com/1/statuses/friends_timeline.json',
-                user.token, user.secret, protected=True,
-                additional_params = params)
-            feed = json.loads(response.content)
-            self.reply_template(message, 'timeline', feed=feed)
-            if len(feed) > 0:
-                self.mapping.last_id = feed[0]['id']
-                self.mapping.put()
-        except Exception, e:
-                self.reply_template(message, 'error', exception = repr(e),
-                    error="Twitter didn't let us fetch your tweets.")
+        response = client.make_request(
+            'http://api.twitter.com/1/statuses/friends_timeline.json',
+            self.user.token, self.user.secret, protected=True,
+            additional_params = params)
+        feed = json.loads(response.content)
+        self.reply_template('timeline', feed=feed)
+        if len(feed) > 0:
+            self.mapping.last_id = feed[0]['id']
+            self.mapping.put()
 
-    def subscribe(self, message):
+    def search(self, content):
+        response = client.make_request(
+            'http://search.twitter.com/search.json',
+            additional_params = { 'q': content, 'rpp': 50, })
+        feed = json.loads(response.content)['results']
+        self.reply_template('timeline', feed=feed)
+
+    def subscribe(self):
         hour = datetime.datetime.utcnow().hour
         self.mapping.subscribe = hour
         self.mapping.put()
-        self.reply_template(message, 'subscribe', hour=hour)
+        self.reply_template('subscribe', hour=hour)
 
-    def unsubscribe(self, message):
+    def unsubscribe(self):
         self.mapping.subscribe = None
         self.mapping.put()
-        self.reply_template(message, 'unsubscribe')
-
-
-# TODO: Cron job for subscribes
+        self.reply_template('unsubscribe')
 
 
 application = webapp.WSGIApplication([
@@ -228,3 +228,6 @@ application = webapp.WSGIApplication([
 
 if __name__ == '__main__':
     webapp.util.run_wsgi_app(application)
+
+
+# TODO: Cron job for subscribes

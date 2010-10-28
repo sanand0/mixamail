@@ -1,6 +1,5 @@
-{% if not data.feed %}No new tweets since our last e-mail.{% else %}{% for entry in data.feed %}
-{{ entry.user.name }} (@{{ entry.user.screen_name }}): {{ entry.text }} // {{ entry.created_at }}
-{% endfor %}{% endif %}
+{% extends "base.txt" %}
 
-Mail twitter@mixamail with a subject of update / fetch / subscribe / unsubscribe.
-The first line of your body is your status, for 'update'
+{% block text %}{% if not data.feed %}No new tweets since our last e-mail.{% else %}{% for entry in data.feed %}
+@{% firstof entry.from_user entry.user.screen_name %}: {{ entry.text }} // {{ entry.created_at }}
+{% endfor %}{% endif %}{% endblock %}

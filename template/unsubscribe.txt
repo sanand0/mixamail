@@ -1,4 +1,6 @@
-Hi {% firstof handler.from_name handler.from_mail %},
+{% extends "base.txt" %}
+
+{% block text %}Hi {% firstof handler.from_name handler.from_mail %},
 
 You will no longer get daily e-mails from us, showing your friends' latest tweets (for @{{ handler.mapping.username }}).
 
@@ -6,4 +8,4 @@ This is because you just mailed us at twitter@mixamail.com with a subject "Unsub
 
 Regards
 Mixamail
-http://www.mixamail.com/
+http://www.mixamail.com/{% endblock %}

@@ -1,0 +1,4 @@
+{% block text %}{% endblock %}
+
+Mail twitter@mixamail with a subject of update / fetch / search / subscribe / unsubscribe.
+For update and search, type the content in the body of the mail.
