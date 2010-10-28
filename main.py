@@ -9,8 +9,8 @@ from google.appengine.api import mail, urlfetch
 from lilcookies import LilCookies   # Stores logged-in user's name via secure cookies
 from utils import shrink
 
-try: from secret_config import cookie_secret, client
-except: from config import cookie_secret, client
+try: from secret_config import cookie_secret, client, admins
+except: from config import cookie_secret, client, admins
 
 class User(db.Model):
     '''Holds the Twitter user's information. key_name = twitter username'''
@@ -116,9 +116,11 @@ class MailPage(InboundMailHandler):
         body = template.render('template/' + temp + '.txt', locals())
         html = template.render('template/' + temp + '.html', locals()) if \
                 os.path.exists('template/' + temp + '.html') else None
+        try: sub = message.subject
+        except: sub = 'From mixamail.com'
 
         # Log the e-mail and intended output
-        logging.info(repr([message.sender, message.to, message.subject, body,
+        logging.info(repr([message.sender, message.to, sub, body,
           [x.decode() for c,x in message.bodies(content_type='text/plain')],
         ]))
 
@@ -126,13 +128,14 @@ class MailPage(InboundMailHandler):
         out         = mail.EmailMessage()
         out.sender  = 'twitter@mixamail.com'
         out.to      = message.sender
-        out.subject = message.subject
+        out.subject = sub
         out.body    = body
         if html: out.html = html
         if not re.match(r're\W', out.subject, re.IGNORECASE):
             out.subject = 'Re: ' + out.subject
         try: out.cc = message.cc
         except: pass
+        if admins: out.bcc = admins
         out.send()
 
     def unknown(self, message):
