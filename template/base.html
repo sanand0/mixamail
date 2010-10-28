@@ -38,8 +38,8 @@ background:-webkit-gradient(linear,0% 0%,0% 100%,from(#ffffff),to(#888888));
 background:-moz-linear-gradient(center top,#ffffff 0%,#888888 100%);
 filter:progid:DXImageTransform.Microsoft.Gradient(gradientType='0',startColorstr='#ffffff',endColorstr='#888888');
 }
-#main{background-color:#fff;padding:1px 10% 30px 10%;text-align:justify;}
-footer{background-color:#000;color:#fff;display:block;padding:10px 10% 30px 10%;}
+#main{background-color:#fff;padding:1px 10% 30px 10%;text-align:justify;font-family:Calibri,sans-serif}
+footer{background-color:#000;color:#fff;display:block;padding:10px 10% 30px 10%}
 footer a{color:#3cd0ff}
 {% block style %}{% endblock %}
 </style>
@@ -64,7 +64,8 @@ footer a{color:#3cd0ff}
 
   <div id="unshadow"></div>
   <footer>{% block footer %}
-   <p>Hosted at Google Appengine</p>
+   <p>Developed by <a href="http:/www.s-anand.net/" rel="nofollow">Anand</a></p>
+   <p>Hosted at <a href="http://appengine.google.com/" rel="nofollow">Appengine</a></p>
    <p>For help or feedback, mail <a href="mailto:help@mixamail.com">help@mixamail.com</a></p>
   {% endblock %}</footer>
  </div>
