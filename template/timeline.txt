@@ -2,5 +2,5 @@
 {{ entry.user.name }} (@{{ entry.user.screen_name }}): {{ entry.text }} // {{ entry.created_at }}
 {% endfor %}{% endif %}
 
-Mixamail
-http://www.mixamail.com/
+Mail twitter@mixamail with a subject of update / fetch / subscribe / unsubscribe.
+The first line of your body is your status, for 'update'
