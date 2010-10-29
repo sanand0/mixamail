@@ -1,10 +1,10 @@
 '''
 shrink(text, size): shrinks text to size, using URL shortening, word substitution, etc.
-parse_feed(feed): enhances feeds
+extend(feed): extends feed with more attributes
 '''
 import re, urllib
-try: from secret_config import bitly
-except: from config import cookie_secret, client
+try: from secret_config import bitly, sender_mail
+except: from config import bitly, sender_mail
 
 def re_compile(words):
     return dict((re.compile(k, re.IGNORECASE), v) for k,v in words.iteritems())
@@ -91,15 +91,20 @@ def shrink(text, size):
 
 
 import rfc822, time, datetime
+from ttp import Parser as TwitterParser
 
-def parse_feed(feed):
+def extend(feed):
     now = time.time()
+    parser = TwitterParser(sender_mail, max_url_length=140)
     for entry in feed:
+        # Add ['ago'] as the relative date
         t = rfc822.parsedate(entry['created_at'])
         d = now - time.mktime(t)
-        if   d < 60     : entry['ago'] = '%.0fsec' % d
-        elif d < 3600   : entry['ago'] = '%.0fmin' % (d/60)
-        elif d < 86400  : entry['ago'] = '%.0fhr' % (d/3600)
-        elif d < 172800 : entry['ago'] = 'yest'
+        if   d < 90     : entry['ago'] = '%.0fsec' % d
+        elif d < 5400   : entry['ago'] = '%.0fmin' % (d/60)
+        elif d < 129600 : entry['ago'] = '%.0fhr' % (d/3600)
         else            : entry['ago'] = datetime.datetime(*t[:6]).strftime('%d-%b')
+
+        # Add ['html'] as the html version of the text
+        entry['html'] = parser.parse(entry['text']).html
     return feed

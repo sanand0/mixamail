@@ -1,4 +1,4 @@
-import os, os.path, re, datetime, logging
+import os, os.path, re, datetime, logging, traceback
 from email.utils import parseaddr
 from django.utils import simplejson as json
 from google.appengine.ext import webapp, db
@@ -7,7 +7,7 @@ from google.appengine.ext.webapp.util import login_required
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from google.appengine.api import mail, urlfetch
 from lilcookies import LilCookies   # Stores logged-in user's name via secure cookies
-from utils import shrink, parse_feed
+from utils import shrink, extend
 
 try: from secret_config import cookie_secret, client, admins, sender_mail
 except: from config import cookie_secret, client, admins, sender_mail
@@ -137,6 +137,7 @@ class MailPage(InboundMailHandler):
                 else                            : self.fetch()
             else                                : self.reply_template('unknown')
         except Exception, e:
+            logging.debug(traceback.format_exc(e))
             self.reply_template('error', exception = repr(e),
                 error="Twitter didn't let us " + command)
 
@@ -175,16 +176,14 @@ class MailPage(InboundMailHandler):
             'http://api.twitter.com/1/statuses/update.json',
             self.user.token, self.user.secret, protected=True, method=urlfetch.POST,
             additional_params = params)
-        feed = parse_feed(json.loads(response.content))
-        self.reply_template('timeline', feed=[feed])
+        self.reply_template('timeline', feed=extend([json.loads(response.content)]))
 
     def retweet(self, content, id):
         if not id: return
         response = client.make_request(
             'http://api.twitter.com/1/statuses/retweet/' + id + '.json',
             self.user.token, self.user.secret, protected=True, method=urlfetch.POST)
-        feed = parse_feed(json.loads(response.content))
-        self.reply_template('timeline', feed=[feed])
+        self.reply_template('timeline', feed=[extend(json.loads(response.content))])
 
     def fetch(self):
         params = { 'count': 50 }
@@ -193,8 +192,7 @@ class MailPage(InboundMailHandler):
             'http://api.twitter.com/1/statuses/friends_timeline.json',
             self.user.token, self.user.secret, protected=True,
             additional_params = params)
-        feed = parse_feed(json.loads(response.content))
-        self.reply_template('timeline', feed=feed)
+        self.reply_template('timeline', feed=extend(json.loads(response.content)))
         if len(feed) > 0:
             self.mapping.last_id = feed[0]['id']
             self.mapping.put()
@@ -203,8 +201,8 @@ class MailPage(InboundMailHandler):
         response = client.make_request(
             'http://search.twitter.com/search.json',
             additional_params = { 'q': content, 'rpp': 50, })
-        feed = parse_feed(json.loads(response.content)['results'])
-        self.reply_template('timeline', feed=feed)
+        self.reply_template('timeline',
+            feed=extend(json.loads(response.content)['results']))
 
     def subscribe(self):
         hour = datetime.datetime.utcnow().hour
@@ -216,7 +214,6 @@ class MailPage(InboundMailHandler):
         self.mapping.subscribe = None
         self.mapping.put()
         self.reply_template('unsubscribe')
-
 
 application = webapp.WSGIApplication([
     ('/',           HomePage),
