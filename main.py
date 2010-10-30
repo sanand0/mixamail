@@ -189,7 +189,7 @@ class MailPage(InboundMailHandler):
         params = { 'count': 50 }
         if self.mapping.last_id: params['since_id'] = self.mapping.last_id
         response = client.make_request(
-            'http://api.twitter.com/1/statuses/friends_timeline.json',
+            'http://api.twitter.com/1/statuses/home_timeline.json',
             self.user.token, self.user.secret, protected=True,
             additional_params = params)
         feed = extend(json.loads(response.content))
