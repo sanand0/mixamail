@@ -148,7 +148,7 @@ class MailPage(InboundMailHandler):
         html = template.render('template/' + temp + '.html', locals()) if \
                 os.path.exists('template/' + temp + '.html') else None
         try: sub = self.message.subject
-        except: sub = 'From ' + sender_mail
+        except: sub = ''
 
         # Log the e-mail and intended output
         logging.info(repr([self.message.sender, self.message.to, sub, body,
