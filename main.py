@@ -101,7 +101,7 @@ class MailPage(InboundMailHandler):
 
         cmd_re = re.compile(r'(\w+)[^a-z0-9_@]*(.*)', re.IGNORECASE)
         match = re.match(cmd_re, subject)
-        if not match: return (None,None)
+        if not match: return (None,None,None)
         command, param = match.groups()
 
         body = None
@@ -192,7 +192,8 @@ class MailPage(InboundMailHandler):
             'http://api.twitter.com/1/statuses/friends_timeline.json',
             self.user.token, self.user.secret, protected=True,
             additional_params = params)
-        self.reply_template('timeline', feed=extend(json.loads(response.content)))
+        feed = extend(json.loads(response.content))
+        self.reply_template('timeline', feed=feed)
         if len(feed) > 0:
             self.mapping.last_id = feed[0]['id']
             self.mapping.put()
@@ -201,6 +202,7 @@ class MailPage(InboundMailHandler):
         response = client.make_request(
             'http://search.twitter.com/search.json',
             additional_params = { 'q': content, 'rpp': 50, })
+        logging.debug(response.content)
         self.reply_template('timeline',
             feed=extend(json.loads(response.content)['results']))
 
