@@ -1,0 +1,4 @@
+cron:
+- description: hourly subscription runs
+  url: /subscription
+  schedule: every 60 minutes synchronized

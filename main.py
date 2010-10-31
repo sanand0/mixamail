@@ -6,6 +6,7 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import login_required
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from google.appengine.api import mail, urlfetch
+from google.appengine.api.labs import taskqueue
 from lilcookies import LilCookies   # Stores logged-in user's name via secure cookies
 from utils import shrink, extend
 
@@ -23,9 +24,9 @@ class User(db.Model):
 class Email(db.Model):
     '''Maps email addresses to a Twitter username. key_name = email'''
     username  = db.StringProperty()     # Twitter userid authorised for the e-mail
-    subscribe = db.IntegerProperty()    # Hour (GTM) to mail user. None if usubscribed
+    subscribe = db.IntegerProperty()    # Hour (GMT) to mail user. None if usubscribed
     last_id   = db.IntegerProperty()    # Last Twitter ID e-mailed to this e-mail
-    last_fetch= db.DateTimeProperty(auto_now=True)
+    last_fetch= db.DateTimeProperty()   # Time of last fetch (not record updation)
 
 
 class HomePage(webapp.RequestHandler):
@@ -50,6 +51,7 @@ class HomePage(webapp.RequestHandler):
             if email:
                 mapping = Email.get_by_key_name(email) or Email(key_name=email)
                 mapping.username = self.cookie.get_secure_cookie('username')
+                mapping.subscribe = datetime.datetime.utcnow().hour
                 mapping.put()
             elif delete:
                 mapping = Email.get_by_key_name(delete)
@@ -81,6 +83,33 @@ class AuthPage(webapp.RequestHandler):
 
         else:
             self.redirect(client.get_authorization_url())
+
+
+class SubscriptionPage(webapp.RequestHandler):
+    def get(self):
+        '''Add all emails for current hour not fetched in the last hour'''
+        now = datetime.datetime.utcnow()
+        q = Email.all().filter('subscribe =', now.hour)
+        q = q.filter('last_fetch <', now - datetime.timedelta(hours=1))
+        ids = set(item.key().name() for item in q)
+        logging.info('Subscriptions queued: ' + repr(ids))
+        tasks = [taskqueue.Task(url='/subscription', params={'id':id})
+                 for id in ids]
+
+        # Add in batches -- 100 is the limit
+        queue = taskqueue.Queue('subscription')
+        batch_size = 100
+        for num in xrange(0, len(tasks), batch_size):
+          try:
+            queue.add(tasks[num:num+batch_size])
+          except taskqueue.TaskAlreadyExistsError, taskqueue.DuplicateTaskNameError:
+            pass
+
+    def post(self):
+        '''Fetch e-mail for a single user'''
+        id = self.request.get('id')
+        message = mail.EmailMessage(sender=id, to=sender_mail, subject='Fetch')
+        MailPage().receive(message)
 
 
 class LogoutPage(webapp.RequestHandler):
@@ -196,6 +225,7 @@ class MailPage(InboundMailHandler):
         self.reply_template('timeline', feed=feed)
         if len(feed) > 0:
             self.mapping.last_id = feed[0]['id']
+            self.mapping.last_fetch = datetime.datetime.utcnow()
             self.mapping.put()
 
     def search(self, content):
@@ -217,15 +247,14 @@ class MailPage(InboundMailHandler):
         self.mapping.put()
         self.reply_template('unsubscribe')
 
+
 application = webapp.WSGIApplication([
-    ('/',           HomePage),
-    ('/auth',       AuthPage),
-    ('/logout',     LogoutPage),
+    ('/',               HomePage),
+    ('/auth',           AuthPage),
+    ('/logout',         LogoutPage),
+    ('/subscription',   SubscriptionPage),
     MailPage.mapping(),
 ], debug=(os.name=='nt'))
 
 if __name__ == '__main__':
     webapp.util.run_wsgi_app(application)
-
-
-# TODO: Cron job for subscribes

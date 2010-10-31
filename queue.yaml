@@ -1,0 +1,4 @@
+queue:
+- name: subscription
+  rate: 5/s
+  bucket_size: 5
