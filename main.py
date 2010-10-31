@@ -161,12 +161,13 @@ class MailPage(InboundMailHandler):
                 elif command == 're'            : self.update(body, id=param)
                 elif command == 'retweet'       : self.retweet(body, id=param)
                 elif command == 'rt'            : self.retweet(body, id=param)
+                elif command == 'like'          : self.like(body, id=param)
                 elif command == 'subscribe'     : self.subscribe()
                 elif command == 'unsubscribe'   : self.unsubscribe()
                 else                            : self.fetch()
             else                                : self.reply_template('unknown')
         except Exception, e:
-            logging.debug(traceback.format_exc(e))
+            logging.info(traceback.format_exc(e))
             self.reply_template('error', exception = repr(e),
                 error="Twitter didn't let us " + command)
 
@@ -210,9 +211,16 @@ class MailPage(InboundMailHandler):
     def retweet(self, content, id):
         if not id: return
         response = client.make_request(
-            'http://api.twitter.com/1/statuses/retweet/' + id + '.json',
+            'http://api.twitter.com/1/statuses/retweet/%s.json' % id,
             self.user.token, self.user.secret, protected=True, method=urlfetch.POST)
-        self.reply_template('timeline', feed=[extend(json.loads(response.content))])
+        self.reply_template('timeline', feed=extend([json.loads(response.content)]))
+
+    def like(self, content, id):
+        if not id: return
+        response = client.make_request(
+            'http://api.twitter.com/1/favorites/create/%s.json' % id,
+            self.user.token, self.user.secret, protected=True, method=urlfetch.POST)
+        self.reply_template('timeline', feed=extend([json.loads(response.content)]))
 
     def fetch(self):
         params = { 'count': 50 }

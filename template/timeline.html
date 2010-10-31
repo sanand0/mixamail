@@ -1,6 +1,7 @@
 {% if not data.feed %}<p>No new tweets since our last e-mail.</p>{% else %}{% for entry in data.feed %}
 <p><a href="http://twitter.com/{% firstof entry.user.screen_name entry.from_user %}">{% firstof entry.user.name entry.from_user %}</a>: {{ entry.html }}
 <i>{{ entry.ago }}</i>
+<a href="mailto:twitter@mixamail.com?subject=Like:%20{{entry.id}}">like</a>
 <a href="mailto:twitter@mixamail.com?body=@{% firstof entry.user.screen_name entry.from_user %}%20&subject=Re:%20{{entry.id}}">reply</a>
 <a href="mailto:twitter@mixamail.com?subject=RT:%20{{entry.id}}">retweet</a>
 </p>
