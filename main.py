@@ -1,4 +1,4 @@
-import os, os.path, re, datetime, logging, traceback
+import os, os.path, re, urllib, datetime, logging, traceback
 from email.utils import parseaddr
 from django.utils import simplejson as json
 from google.appengine.ext import webapp, db
@@ -10,8 +10,8 @@ from google.appengine.api.labs import taskqueue
 from lilcookies import LilCookies   # Stores logged-in user's name via secure cookies
 from utils import shrink, extend
 
-try: from secret_config import cookie_secret, client, admins, sender_mail
-except: from config import cookie_secret, client, admins, sender_mail
+try: from secret_config import cookie_secret, client, admins, sender_mail, google_api
+except: from     config import cookie_secret, client, admins, sender_mail, google_api
 
 class User(db.Model):
     '''Holds the Twitter user's information. key_name = twitter username'''
@@ -92,7 +92,7 @@ class SubscriptionPage(webapp.RequestHandler):
         q = Email.all().filter('subscribe =', now.hour)
         q = q.filter('last_fetch <', now - datetime.timedelta(hours=1))
         ids = set(item.key().name() for item in q)
-        logging.info('Subscriptions queued: ' + repr(ids))
+        logging.debug('Subscriptions queued: ' + repr(ids))
         tasks = [taskqueue.Task(url='/subscription', params={'id':id})
                  for id in ids]
 
@@ -162,6 +162,7 @@ class MailPage(InboundMailHandler):
                 elif command == 'retweet'       : self.retweet(body, id=param)
                 elif command == 'rt'            : self.retweet(body, id=param)
                 elif command == 'like'          : self.like(body, id=param)
+                elif command == 'google'        : self.google(param or body)
                 elif command == 'subscribe'     : self.subscribe()
                 elif command == 'unsubscribe'   : self.unsubscribe()
                 else                            : self.fetch()
@@ -254,6 +255,19 @@ class MailPage(InboundMailHandler):
         self.mapping.subscribe = None
         self.mapping.put()
         self.reply_template('unsubscribe')
+
+    def google(self, content):
+        data = urlfetch.fetch('http://ajax.googleapis.com/ajax/services/search/web?' +
+            urllib.urlencode({
+                'q': content,
+                'v': '1.0',
+                # 'userip': TODO: get this from self.message, somehow
+                'rsz': '8',
+                'key': google_api['apiKey'],
+            }), headers = {
+                'Referer': google_api['domain'],
+            })
+        self.reply_template('google', feed=json.loads(data.content))
 
 
 application = webapp.WSGIApplication([

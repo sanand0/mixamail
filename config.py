@@ -18,6 +18,12 @@ bitly = {
     'apiKey': 'bit.ly-api-key',
 }
 
+# Get your Google AJAX search key at http://code.google.com/apis/loader/signup.html
+google_api = {
+    'domain': 'http://domain.com/',
+    'apiKey': 'your-api-key',
+}
+
 # Admin accounts
 sender_mail = 'applications-email-id@domain.com'
 admins = [ 'your-user-id@domain.com' ]

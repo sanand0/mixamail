@@ -1,0 +1,5 @@
+{% extends "base.txt" %}
+
+{% block text %}{% if not data.feed.responseData.results %}No search results.{% else %}{% for entry in data.feed.responseData.results %}
+{{ entry.titleNoFormatting }}: {{ entry.content }} {{ entry.visibleUrl }}
+{% endfor %}{% endif %}{% endblock %}
