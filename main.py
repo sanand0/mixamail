@@ -1,5 +1,5 @@
 import os, os.path, re, urllib, datetime, logging, traceback
-from email.utils import parseaddr
+from email.utils import parseaddr, getaddresses, formataddr
 from django.utils import simplejson as json
 from google.appengine.ext import webapp, db
 from google.appengine.ext.webapp import template
@@ -147,7 +147,6 @@ class MailPage(InboundMailHandler):
         '''Depending on the subject, perform the appropriate action'''
         self.message = message
         self.from_name, self.from_mail = parseaddr(message.sender)
-        self.to_name, self.to_mail = parseaddr(message.to)
         self.mapping = Email.get_by_key_name(self.from_mail.lower())
         if self.mapping and self.mapping.username:
             self.user = User.get_by_key_name(self.mapping.username)
@@ -170,7 +169,7 @@ class MailPage(InboundMailHandler):
         except Exception, e:
             logging.info(traceback.format_exc(e))
             self.reply_template('error', exception = repr(e),
-                error="Twitter didn't let us " + command)
+                error="Twitter didn't let us " + (command or 'fetch'))
 
     def reply_template(self, temp, **data):
         '''Send a reply based on a specified template, passing it optional data'''
@@ -181,14 +180,18 @@ class MailPage(InboundMailHandler):
         try: sub = self.message.subject
         except: sub = ''
 
+        to_list = [formataddr((name, email)) for name, email in
+                    getaddresses([self.message.sender] + [self.message.to])
+                    if not email.lower() == sender_mail.lower()]
+
         # Log the e-mail and intended output
-        logging.info(repr([self.message.sender, self.message.to, sub, body,
+        logging.info(repr([self.message.sender, to_list, sub, body,
           [x.decode() for c,x in self.message.bodies(content_type='text/plain')],
         ]))
 
         out = mail.EmailMessage(
             sender  = sender_mail,
-            to      = self.message.sender,
+            to      = to_list,
             subject = sub,
             body    = body)
         if html: out.html = html
