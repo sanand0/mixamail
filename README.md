@@ -21,7 +21,10 @@ References
 
 Planned development
 -------------------
-- D: <username> sends a direct message to username
-- google@mixamail.com responds with search results
 - facebook@mixamail.com fetches Facebook feeds
 - read@mixamail.com response with the [readability](http://lab.arc90.com/experiments/readability/) equivalent of a page
+- D: <username> sends a direct message to username
+- Upload pictures
+- Search subscriptions
+- modified retweets
+- embedded profile images?
