@@ -93,6 +93,18 @@ def shrink(text, size):
 import rfc822, time, datetime
 from ttp import Parser as TwitterParser
 
+def unicodize(object):
+    '''Django 0.96 template tags (like firstof) don't support unicode.
+    This function does a deep conversion of every string to UTF-8'''
+    t = type(object)
+    if t is unicode:
+        object = object.encode('utf-8')
+    elif t is list:
+        for i, v in enumerate(object): object[i] = unicodize(v)
+    elif t is dict:
+        for i, v in object.iteritems(): object[i] = unicodize(v)
+    return object
+
 def extend(feed):
     now = time.time()
     parser = TwitterParser(sender_mail, max_url_length=140)
@@ -106,5 +118,6 @@ def extend(feed):
         else            : entry['ago'] = datetime.datetime(*t[:6]).strftime('%d-%b')
 
         # Add ['html'] as the html version of the text
-        entry['html'] = parser.parse(entry['text']).html.encode('utf-8')
-    return feed
+        entry['html'] = parser.parse(entry['text']).html
+
+    return unicodize(feed)
