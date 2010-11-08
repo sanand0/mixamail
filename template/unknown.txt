@@ -4,13 +4,9 @@ You just mailed us. But we're not sure we've been introduced, so here goes: We'r
 
 Mixamail lets you access Twitter via e-mail. This is useful if you have e-mail but not Internet access (e.g. on your BlackBerry).
 
-You can update your status by mailing twitter@mixamail.com with a subject "Update". The body is your status. (We'll shorten links.)
+You haven't yet logged in, but you can still search for public tweets. Mail twitter@mixamail.com with a subject "Search whatever-you-want". We'll reply with tweets mentioning whatever-you-want.
 
-You can read tweets by sending an e-mail to twitter@mixamail.com. (Any other subject, like "fetch" is fine.)
-
-But first, you need to log in at http://www.mixamail.com and give {{ handler.from_mail }} access to your Twitter account.
-
-You can also search for any text by mailing twitter@mixamail.com with a subject "Search". The body is your search query. You don't need to be logged in for this.
+But if you log in at http://www.mixamail.com and give {{ handler.from_mail }} access to your Twitter account, you can read and update tweets too.
 
 Enjoy!
 Mixamail
