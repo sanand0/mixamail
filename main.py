@@ -179,6 +179,7 @@ class MailPage(InboundMailHandler):
                 os.path.exists('template/' + temp + '.html') else None
         try: sub = self.message.subject
         except: sub = ''
+        if not re.match(r're\W', sub, re.IGNORECASE): sub = 'Re: ' + sub
 
         to_list = [formataddr((name, email)) for name, email in
                     getaddresses([self.message.sender] + [self.message.to])
@@ -195,8 +196,6 @@ class MailPage(InboundMailHandler):
             subject = sub,
             body    = body)
         if html: out.html = html
-        if not re.match(r're\W', out.subject, re.IGNORECASE):
-            out.subject = 'Re: ' + out.subject
         try: out.cc = self.message.cc
         except: pass
         if admins: out.bcc = admins
@@ -210,6 +209,7 @@ class MailPage(InboundMailHandler):
             'http://api.twitter.com/1/statuses/update.json',
             self.user.token, self.user.secret, protected=True, method=urlfetch.POST,
             additional_params = params)
+        if response.status_code != 200: logging.debug(response.content)
         self.reply_template('timeline', feed=extend([json.loads(response.content)]))
 
     def retweet(self, content, id):
@@ -217,6 +217,7 @@ class MailPage(InboundMailHandler):
         response = client.make_request(
             'http://api.twitter.com/1/statuses/retweet/%s.json' % id,
             self.user.token, self.user.secret, protected=True, method=urlfetch.POST)
+        if response.status_code != 200: logging.debug(response.content)
         self.reply_template('timeline', feed=extend([json.loads(response.content)]))
 
     def like(self, content, id):
@@ -224,6 +225,7 @@ class MailPage(InboundMailHandler):
         response = client.make_request(
             'http://api.twitter.com/1/favorites/create/%s.json' % id,
             self.user.token, self.user.secret, protected=True, method=urlfetch.POST)
+        if response.status_code != 200: logging.debug(response.content)
         self.reply_template('timeline', feed=extend([json.loads(response.content)]))
 
     def fetch(self):
@@ -244,7 +246,7 @@ class MailPage(InboundMailHandler):
         response = client.make_request(
             'http://search.twitter.com/search.json',
             additional_params = { 'q': content, 'rpp': 50, })
-        logging.debug(response.content)
+        if response.status_code != 200: logging.debug(response.content)
         self.reply_template('timeline',
             feed=extend(json.loads(response.content)['results']))
 
