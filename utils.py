@@ -106,5 +106,5 @@ def extend(feed):
         else            : entry['ago'] = datetime.datetime(*t[:6]).strftime('%d-%b')
 
         # Add ['html'] as the html version of the text
-        entry['html'] = parser.parse(entry['text']).html
+        entry['html'] = parser.parse(entry['text']).html.encode('utf-8')
     return feed
