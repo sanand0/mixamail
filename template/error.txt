@@ -4,8 +4,10 @@
 
 You sent us an e-mail. I'm sorry, but we have a problem: {{ data.error }}
 
-Try logging out of http://www.mixamail.com and logging in again.
-Or try again after a few minutes.
+We have been informed of the problem. We'll try and sort it out.
+
+But in the meantime, you could try again after a few minutes.
+Or try logging out of http://www.mixamail.com and logging in again.
 Or just go home and visit twitter.com.
 
 {% if data.exception %}PS: Here's a technical description of the error, if it makes any sense to you.
