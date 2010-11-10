@@ -1,4 +1,4 @@
-import os, os.path, re, urllib, datetime, logging, traceback
+import os, os.path, re, urllib, datetime, logging, traceback, oauth
 from email.utils import parseaddr, getaddresses, formataddr
 from django.utils import simplejson as json
 from google.appengine.ext import webapp, db
@@ -10,8 +10,11 @@ from google.appengine.api.labs import taskqueue
 from lilcookies import LilCookies   # Stores logged-in user's name via secure cookies
 from utils import shrink, extend
 
-try: from secret_config import cookie_secret, client, admins, sender_mail, google_api
-except: from     config import cookie_secret, client, admins, sender_mail, google_api
+try: import secret_config as config
+except: import config
+
+# Register your Twitter application at http://dev.twitter.com and fill these in
+client = oauth.TwitterClient(**config.twitter_params)
 
 class User(db.Model):
     '''Holds the Twitter user's information. key_name = twitter username'''
@@ -32,7 +35,7 @@ class Email(db.Model):
 class HomePage(webapp.RequestHandler):
     def get(self):
         '''Displays the setup page for logged-in users, and home page for others.'''
-        self.cookie = LilCookies(self, cookie_secret)
+        self.cookie = LilCookies(self, config.cookie_secret)
         username = self.cookie.get_secure_cookie('username')
         if not username:
             self.response.out.write(template.render('template/home.html', locals()))
@@ -43,7 +46,7 @@ class HomePage(webapp.RequestHandler):
 
     def post(self):
         '''Adds or deletes e-mail addresses for a logged-in user'''
-        self.cookie = LilCookies(self, cookie_secret)
+        self.cookie = LilCookies(self, config.cookie_secret)
         username = self.cookie.get_secure_cookie('username')
         email = self.request.get('email').lower()
         delete = self.request.get('delete').lower()
@@ -63,7 +66,7 @@ class HomePage(webapp.RequestHandler):
 class AuthPage(webapp.RequestHandler):
     '''Handles Twitter OAuth. See oauth.py for more documentation'''
     def get(self):
-        self.cookie = LilCookies(self, cookie_secret)
+        self.cookie = LilCookies(self, config.cookie_secret)
 
         if self.request.get('oauth_token'):
             auth_token = self.request.get('oauth_token')
@@ -83,7 +86,6 @@ class AuthPage(webapp.RequestHandler):
 
         else:
             self.redirect(client.get_authorization_url())
-
 
 class SubscriptionPage(webapp.RequestHandler):
     def get(self):
@@ -108,14 +110,14 @@ class SubscriptionPage(webapp.RequestHandler):
     def post(self):
         '''Fetch e-mail for a single user'''
         id = self.request.get('id')
-        message = mail.EmailMessage(sender=id, to=sender_mail, subject='Fetch')
-        MailPage().receive(message)
+        msg = mail.EmailMessage(sender=id, to=config.sender_mail, subject='Fetch')
+        MailPage().receive(msg)
 
 
 class LogoutPage(webapp.RequestHandler):
     '''Logs the user out by removing the cookie.'''
     def get(self):
-        self.cookie = LilCookies(self, cookie_secret)
+        self.cookie = LilCookies(self, config.cookie_secret)
         self.redirect('/')
 
 
@@ -183,7 +185,7 @@ class MailPage(InboundMailHandler):
 
         to_list = [formataddr((name, email)) for name, email in
                     getaddresses([self.message.sender] + [self.message.to])
-                    if not email.lower() == sender_mail.lower()]
+                    if not email.lower() == config.sender_mail.lower()]
 
         # Log the e-mail and intended output
         logging.info(repr([self.message.sender, to_list, sub, body,
@@ -191,14 +193,14 @@ class MailPage(InboundMailHandler):
         ]))
 
         out = mail.EmailMessage(
-            sender  = sender_mail,
+            sender  = config.sender_mail,
             to      = to_list,
             subject = sub,
             body    = body)
         if html: out.html = html
         try: out.cc = self.message.cc
         except: pass
-        if admins: out.bcc = admins
+        if config.admins: out.bcc = config.admins
         out.send()
 
     def update(self, content, id=None):
@@ -276,9 +278,9 @@ class MailPage(InboundMailHandler):
                 'v': '1.0',
                 # 'userip': TODO: get this from self.message, somehow
                 'rsz': '8',
-                'key': google_api['apiKey'],
+                'key': config.google_api['apiKey'],
             }), headers = {
-                'Referer': google_api['domain'],
+                'Referer': config.google_api['domain'],
             })
         self.reply_template('google', feed=json.loads(data.content))
 

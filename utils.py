@@ -3,8 +3,8 @@ shrink(text, size): shrinks text to size, using URL shortening, word substitutio
 extend(feed): extends feed with more attributes
 '''
 import re, urllib
-try: from secret_config import bitly, sender_mail
-except: from config import bitly, sender_mail
+try: import secret_config as config
+except: import config
 
 def re_compile(words):
     return dict((re.compile(k, re.IGNORECASE), v) for k,v in words.iteritems())
@@ -62,8 +62,8 @@ def no_whitespace(text):
 def short_url(text):
     if not re.match(URL_RE, text): return text
     return urllib.urlopen('http://api.bit.ly/v3/shorten', urllib.urlencode({
-        'login': bitly['login'],
-        'apiKey': bitly['apiKey'],
+        'login': config.bitly['login'],
+        'apiKey': config.bitly['apiKey'],
         'longUrl': text,
         'format': 'txt',
         'domain': 'j.mp',   # Shorter than bit.ly
@@ -106,7 +106,7 @@ def unicodize(object):
 
 def extend(feed):
     now = time.time()
-    parser = TwitterParser(sender_mail, max_url_length=140)
+    parser = TwitterParser(config.sender_mail, max_url_length=140)
     for entry in feed:
         # Add ['ago'] as the relative date
         t = rfc822.parsedate(entry['created_at'])

@@ -3,14 +3,17 @@ This file has a public version of information that needs to be kept secret.
 Copy this file into secret_config.py and fill in the details.
 '''
 
-import oauth
+twitter_params = {
+    'consumer_key'      : 'your-consumer-key-here',
+    'consumer_secret'   : 'your-consumer-secret-here',
+    'callback_url'      : 'http://your-server-url/auth',
+}
 
-# Register your Twitter application at http://dev.twitter.com and fill these in
-client = oauth.TwitterClient(
-    consumer_key    = 'your-consumer-key-here',
-    consumer_secret = 'your-consumer-secret-here',
-    callback_url    = 'http://your-server-url/auth',
-)
+# Get your facebook app registered at http://developers.facebook.com/setup/
+facebook_params = {
+    'app_id'        : 'your-facebook-app-id',
+    'app_secret'    : 'your-facebook-app-secret',
+}
 
 # Get your bit.ly API key at http://bit.ly/a/your_api_key
 bitly = {
