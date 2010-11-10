@@ -243,9 +243,17 @@ class MailPage(InboundMailHandler):
             self.mapping.put()
 
     def search(self, content):
-        response = client.make_request(
-            'http://search.twitter.com/search.json',
-            additional_params = { 'q': content, 'rpp': 50, })
+        # Make an authorised search request where possible
+        if self.mapping and self.mapping.username:
+            logging.info('Secure search request')
+            response = client.make_request(
+                'http://search.twitter.com/search.json',
+                self.user.token, self.user.secret, protected=True,
+                additional_params = { 'q': content, 'rpp': 50, })
+        else:
+            response = client.make_request(
+                'http://search.twitter.com/search.json',
+                additional_params = { 'q': content, 'rpp': 50, })
         if response.status_code != 200: logging.debug(response.content)
         self.reply_template('timeline',
             feed=extend(json.loads(response.content)['results']))
