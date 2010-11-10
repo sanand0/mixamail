@@ -14,8 +14,7 @@ zapwords = re_compile({
 })
 
 words = re_compile({
-  r'\byou\b': 'u',
-  r'\byour\b': 'ur',
+  r'\byou': 'u',
   r'\band\b': '&',
   r'\bat\b': '@',
   r'\bare\b': 'R',
