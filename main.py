@@ -1,4 +1,4 @@
-import os, os.path, re, urllib, datetime, logging, traceback, oauth
+import os, os.path, re, cgi, urllib, datetime, logging, traceback, oauth
 from email.utils import parseaddr, getaddresses, formataddr
 from django.utils import simplejson as json
 from google.appengine.ext import webapp, db
@@ -17,40 +17,45 @@ except: import config
 client = oauth.TwitterClient(**config.twitter_params)
 
 class User(db.Model):
-    '''Holds the Twitter user's information. key_name = twitter username'''
-    created = db.DateTimeProperty(auto_now=True)
-    name    = db.StringProperty()   # Display name for the user
-    picture = db.StringProperty()   # Profile image URL
-    token   = db.StringProperty()   # OAuth token
-    secret  = db.StringProperty()   # OAuth secret
+    '''Holds the user's information. key_name is some unique string'''
+    created     = db.DateTimeProperty(auto_now_add=True)
+    name        = db.StringProperty()   # Display name for the user [FB/Twitter]
+    picture     = db.StringProperty()   # Profile image URL [FB/Twitter]
+    token       = db.StringProperty()   # Twitter OAuth token
+    secret      = db.StringProperty()   # Twitter OAuth secret
+    user        = db.StringProperty()   # Twitter user name
+    fb_id       = db.StringProperty()   # Facebook user ID
+    fb_token    = db.StringProperty()   # Facebook OAuth2 token
 
 class Email(db.Model):
-    '''Maps email addresses to a Twitter username. key_name = email'''
-    username  = db.StringProperty()     # Twitter userid authorised for the e-mail
-    subscribe = db.IntegerProperty()    # Hour (GMT) to mail user. None if usubscribed
-    last_id   = db.IntegerProperty()    # Last Twitter ID e-mailed to this e-mail
-    last_fetch= db.DateTimeProperty()   # Time of last fetch (not record updation)
+    '''Maps email addresses to a user. key_name = email'''
+    username        = db.StringProperty()   # User key authorised for the e-mail
+    subscribe       = db.IntegerProperty()  # Hour (GMT) to mail user, if subscribed
+    last_id         = db.IntegerProperty()  # Last Twitter ID e-mailed to this e-mail
+    last_fetch      = db.DateTimeProperty() # Time of last fetch (not record updation)
+    fb_subscribe    = db.IntegerProperty()  # Facebook: Hour to mail subscribed user
+    fb_last_fetch   = db.DateTimeProperty() # Facebook: Time of last fetch
 
 
 class HomePage(webapp.RequestHandler):
     def get(self):
         '''Displays the setup page for logged-in users, and home page for others.'''
         self.cookie = LilCookies(self, config.cookie_secret)
-        username = self.cookie.get_secure_cookie('username')
-        if not username:
+        id = self.cookie.get_secure_cookie('username')
+        if not id:
             self.response.out.write(template.render('template/home.html', locals()))
         else:
-            user = User.get_by_key_name(username)
-            emails = Email.all().filter('username =', username)
+            user = User.get_by_key_name(id)
+            emails = Email.all().filter('username =', id)
             self.response.out.write(template.render('template/setup.html', locals()))
 
     def post(self):
         '''Adds or deletes e-mail addresses for a logged-in user'''
         self.cookie = LilCookies(self, config.cookie_secret)
-        username = self.cookie.get_secure_cookie('username')
+        id = self.cookie.get_secure_cookie('username')
         email = self.request.get('email').lower()
         delete = self.request.get('delete').lower()
-        if username:
+        if id:
             if email:
                 mapping = Email.get_by_key_name(email) or Email(key_name=email)
                 mapping.username = self.cookie.get_secure_cookie('username')
@@ -63,29 +68,88 @@ class HomePage(webapp.RequestHandler):
         self.redirect('/')
 
 
-class AuthPage(webapp.RequestHandler):
+class TwitterAuth(webapp.RequestHandler):
     '''Handles Twitter OAuth. See oauth.py for more documentation'''
     def get(self):
         self.cookie = LilCookies(self, config.cookie_secret)
+        id = self.cookie.get_secure_cookie('username')
 
         if self.request.get('oauth_token'):
             auth_token = self.request.get('oauth_token')
             auth_verifier = self.request.get('oauth_verifier')
             user_info = client.get_user_info(auth_token, auth_verifier=auth_verifier)
 
-            username = user_info['username']
-            user = User.get_by_key_name(username) or User(key_name=username)
+            # Create the user in the database
+            if not id:
+                id = user_info['username']
+                user = User.all().filter('user =', id).get() or User(key_name='tw'+id)
+            else:
+                user = User.get_by_key_name(id)
+            user.user    = user_info['username']
             user.name    = user_info['name']
             user.picture = user_info['picture']
             user.token   = user_info['token']
             user.secret  = user_info['secret']
             user.put()
 
-            self.cookie.set_secure_cookie('username', username)
+            self.cookie.set_secure_cookie('username', user.key().name())
             self.redirect('/')
 
         else:
             self.redirect(client.get_authorization_url())
+
+
+class FacebookAuth(webapp.RequestHandler):
+    '''Handles Facebook OAuth. See http://developers.facebook.com/docs/api'''
+    def get(self):
+        self.cookie = LilCookies(self, config.cookie_secret)
+        id = self.cookie.get_secure_cookie('username')
+
+        if self.request.get('code'):
+            # Get the access token in exchange for the code
+            url = 'https://graph.facebook.com/oauth/access_token?' + urllib.urlencode({
+                    'client_id': config.facebook_params['app_id'],
+                    'client_secret': config.facebook_params['app_secret'],
+                    'redirect_uri': self.request.url.split('?')[0],
+                    'code': self.request.get('code'),
+                  })
+            out = urlfetch.fetch(url)
+            if out.status_code != 200:
+                self.response.out.write(out.content)
+                return
+
+            data = cgi.parse_qs(out.content)
+            token = data['access_token'][0]
+
+            # Get the user profile data
+            out = urlfetch.fetch('https://graph.facebook.com/me?access_token='+token)
+            if out.status_code != 200:
+                self.response.out.write(out.content)
+                return
+
+            # Create the user in the database
+            user_info = json.loads(out.content)
+            if not id:
+                id = user_info['id']
+                user = User.all().filter('fb_id =', id).get() or User(key_name='fb:'+id)
+            else:
+                user = User.get_by_key_name(id)
+            user.name = user_info['name']
+            user.fb_id = user_info['id']
+            user.fb_token = token
+            user.put()
+
+            self.cookie.set_secure_cookie('username', user.key().name())
+            self.redirect('/')
+
+        else:
+            url = 'https://graph.facebook.com/oauth/authorize?' + urllib.urlencode({
+                    'client_id': config.facebook_params['app_id'],
+                    'redirect_uri': self.request.url.split('?')[0],
+                    'scope': 'publish_stream,offline_access,read_stream',
+                  })
+            self.redirect(url)
+
 
 class SubscriptionPage(webapp.RequestHandler):
     def get(self):
@@ -287,7 +351,9 @@ class MailPage(InboundMailHandler):
 
 application = webapp.WSGIApplication([
     ('/',               HomePage),
-    ('/auth',           AuthPage),
+    ('/auth',           TwitterAuth),   # TODO: Remove this
+    ('/auth/twitter',   TwitterAuth),
+    ('/auth/facebook',  FacebookAuth),
     ('/logout',         LogoutPage),
     ('/subscription',   SubscriptionPage),
     MailPage.mapping(),

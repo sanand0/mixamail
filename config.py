@@ -6,7 +6,7 @@ Copy this file into secret_config.py and fill in the details.
 twitter_params = {
     'consumer_key'      : 'your-consumer-key-here',
     'consumer_secret'   : 'your-consumer-secret-here',
-    'callback_url'      : 'http://your-server-url/auth',
+    'callback_url'      : 'http://your-server-url/auth/twitter',
 }
 
 # Get your facebook app registered at http://developers.facebook.com/setup/

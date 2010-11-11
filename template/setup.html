@@ -15,9 +15,14 @@ input,button{font-size:13px;}
 {% block main %}
 <div class="yui3-g">
 <section class="yui3-u-1-2">
- <p><a href="http://twitter.com/#!/{{ user.key.name }}"><img src="{{ user.picture }}"></a>
+{% if user.user %}
+ <p><a href="http://twitter.com/#!/{{ user.user }}"><img src="{{ user.picture }}"></a></p>
  <h1>{{ user.name }}</h1>
- <h2><a href="http://twitter.com/#!/{{ user.key.name }}">@{{ user.key.name }}</a></h2>
+ <h2><a href="http://twitter.com/#!/{{ user.user }}">@{{ user.user }}</a></h2>
+{% endif %}
+{% if user.fb_id %}
+ <h1><a href="http://www.facebook.com/profile.php?id={{ user.fb_id }}">{{ user.name }}</a></h1>
+{% endif %}
 
  <h1 class="next">Authorised e-mail IDs</h1>
  {% for email in emails %}<form action="" method="post"><input type="hidden" name="delete" value="{{ email.key.name }}">{{ email.key.name }} <button type="submit">X</button></form>{% endfor %}
