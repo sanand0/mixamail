@@ -27,6 +27,11 @@ google_api = {
     'apiKey': 'your-api-key',
 }
 
+# Get your anonymous imgur.com API key from http://imgur.com/register/api_anon
+imgur_api = {
+    'key': 'your-api-key',
+}
+
 # Admin accounts
 sender_mail = 'applications-email-id@domain.com'
 admins = [ 'your-user-id@domain.com' ]

@@ -1,11 +1,11 @@
-import os, os.path, re, cgi, urllib, datetime, logging, traceback, oauth
+import os, os.path, re, cgi, urllib, datetime, logging, traceback, oauth, mimetypes, base64
 from email.utils import parseaddr, getaddresses, formataddr
 from django.utils import simplejson as json
 from google.appengine.ext import webapp, db
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import login_required
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
-from google.appengine.api import mail, urlfetch
+from google.appengine.api import mail, urlfetch, images
 from google.appengine.api.labs import taskqueue
 from lilcookies import LilCookies   # Stores logged-in user's name via secure cookies
 from utils import shrink, extend
@@ -269,11 +269,33 @@ class MailPage(InboundMailHandler):
 
     def update(self, content, id=None):
         if not content: return
+
+        # Upload images where applicable
+        if hasattr(self.message, 'attachments'):
+          for name, body in self.message.attachments:
+            mime = mimetypes.guess_type(name)[0]
+            if mime and mime.startswith('image/'):
+                img = images.Image(body.decode())
+                img.im_feeling_lucky()
+                out = img.execute_transforms(output_encoding=images.JPEG)
+                response = urlfetch.fetch('http://api.imgur.com/2/upload.json',
+                    method='POST',
+                    payload = urllib.urlencode({
+                        'key': config.imgur_api['key'],
+                        'image': base64.b64encode(out),
+                        'caption': content
+                    }))
+                if response.status_code != 200:
+                    logging.debug(response.content)
+                else:
+                    out = json.loads(response.content)
+                    content += ' ' + out['upload']['links']['original']
+
         params = { 'status': shrink(content, 140) }
         if id: params['in_reply_to_status_id'] = id
         response = client.make_request(
             'http://api.twitter.com/1/statuses/update.json',
-            self.user.token, self.user.secret, protected=True, method=urlfetch.POST,
+            self.user.token, self.user.secret, protected=True, method='POST',
             additional_params = params)
         if response.status_code != 200: logging.debug(response.content)
         self.reply_template('timeline', feed=extend([json.loads(response.content)]))
@@ -282,7 +304,7 @@ class MailPage(InboundMailHandler):
         if not id: return
         response = client.make_request(
             'http://api.twitter.com/1/statuses/retweet/%s.json' % id,
-            self.user.token, self.user.secret, protected=True, method=urlfetch.POST)
+            self.user.token, self.user.secret, protected=True, method='POST')
         if response.status_code != 200: logging.debug(response.content)
         self.reply_template('timeline', feed=extend([json.loads(response.content)]))
 
@@ -290,7 +312,7 @@ class MailPage(InboundMailHandler):
         if not id: return
         response = client.make_request(
             'http://api.twitter.com/1/favorites/create/%s.json' % id,
-            self.user.token, self.user.secret, protected=True, method=urlfetch.POST)
+            self.user.token, self.user.secret, protected=True, method='POST')
         if response.status_code != 200: logging.debug(response.content)
         self.reply_template('timeline', feed=extend([json.loads(response.content)]))
 
