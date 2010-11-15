@@ -289,7 +289,7 @@ class MailPage(InboundMailHandler):
                     logging.debug(response.content)
                 else:
                     out = json.loads(response.content)
-                    content += ' ' + out['upload']['links']['original']
+                    content += ' ' + out['upload']['links']['imgur_page']
 
         params = { 'status': shrink(content, 140) }
         if id: params['in_reply_to_status_id'] = id
