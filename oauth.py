@@ -2,6 +2,7 @@
 
 """
 http://github.com/Arachnid/AppEngine-OAuth-Library
+Anand: Added custom headers to make_request for Twitter search rate limiting
 
 A simple OAuth implementation for authenticating users with third party
 websites.
@@ -159,10 +160,10 @@ class OAuthClient():
 
     # Construct the request payload and return it
     return urlencode(params)
-    
-    
+
+
   def make_async_request(self, url, token="", secret="", additional_params=None,
-                   protected=False, method=urlfetch.GET):
+                   protected=False, method=urlfetch.GET, custom_headers=None):
     """Make Request.
 
     Make an authenticated request to any OAuth protected resource.
@@ -170,21 +171,22 @@ class OAuthClient():
     If protected is equal to True, the Authorization: OAuth header will be set.
 
     A urlfetch response object is returned.
-    """      
+    """
     payload = self.prepare_request(url, token, secret, additional_params,
                                    method)
     if method == urlfetch.GET:
         url = "%s?%s" % (url, payload)
         payload = None
     headers = {"Authorization": "OAuth"} if protected else {}
+    if custom_headers: headers.update(custom_headers)
     rpc = urlfetch.create_rpc(deadline=10.0)
     urlfetch.make_fetch_call(rpc, url, method=method, headers=headers, payload=payload)
     return rpc
 
   def make_request(self, url, token="", secret="", additional_params=None,
-                                      protected=False, method=urlfetch.GET):
-    return self.make_async_request(url, token, secret, additional_params, protected, method).get_result()
-  
+                                      protected=False, method=urlfetch.GET, custom_headers=None):
+    return self.make_async_request(url, token, secret, additional_params, protected, method, custom_headers).get_result()
+
   def get_authorization_url(self):
     """Get Authorization URL.
 
