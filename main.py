@@ -174,7 +174,7 @@ class SubscriptionPage(webapp.RequestHandler):
     def post(self):
         '''Fetch e-mail for a single user'''
         id = self.request.get('id')
-        msg = mail.EmailMessage(sender=id, to=config.sender_mail, subject='Fetch')
+        msg = mail.EmailMessage(sender=id, to=config.sender_mail, subject='Fetch (auto-subscribed)')
         MailPage().receive(msg)
 
 
@@ -337,12 +337,15 @@ class MailPage(InboundMailHandler):
             response = client.make_request(
                 'http://search.twitter.com/search.json',
                 self.user.token, self.user.secret, protected=True,
-                additional_params = { 'q': content, 'rpp': 50, })
+                additional_params = { 'q': content, 'rpp': 50, },
+                custom_headers = {'User-Agent': config.google_api['domain']})
         else:
             response = client.make_request(
                 'http://search.twitter.com/search.json',
-                additional_params = { 'q': content, 'rpp': 50, })
-        if response.status_code != 200: logging.debug(response.content)
+                additional_params = { 'q': content, 'rpp': 50, },
+                custom_headers = {'User-Agent': config.google_api['domain']})
+        if response.status_code != 200:
+            logging.debug(response.headers + '\n' + response.content)
         self.reply_template('timeline',
             feed=extend(json.loads(response.content)['results']))
 
