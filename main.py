@@ -345,7 +345,7 @@ class MailPage(InboundMailHandler):
                 additional_params = { 'q': content, 'rpp': 50, },
                 custom_headers = {'User-Agent': config.google_api['domain']})
         if response.status_code != 200:
-            logging.debug(response.headers + '\n' + response.content)
+            logging.debug(repr(response.headers) + '\n' + response.content)
         self.reply_template('timeline',
             feed=extend(json.loads(response.content)['results']))
 
