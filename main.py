@@ -233,7 +233,7 @@ class MailPage(InboundMailHandler):
                 else                            : self.fetch()
             else                                : self.reply_template('unknown')
         except Exception, e:
-            logging.info(traceback.format_exc(e))
+            logging.warn(traceback.format_exc(e))
             self.reply_template('error', exception = repr(e),
                 error="Twitter didn't let us " + (command or 'fetch'))
 
@@ -286,7 +286,7 @@ class MailPage(InboundMailHandler):
                         'caption': content
                     }))
                 if response.status_code != 200:
-                    logging.debug(response.content)
+                    logging.warn(response.content)
                 else:
                     out = json.loads(response.content)
                     content += ' ' + out['upload']['links']['imgur_page']
@@ -317,7 +317,7 @@ class MailPage(InboundMailHandler):
         self.reply_template('timeline', feed=extend([json.loads(response.content)]))
 
     def fetch(self):
-        params = { 'count': 50 }
+        params = { 'count': 100 }
         if self.mapping.last_id: params['since_id'] = self.mapping.last_id
         response = client.make_request(
             'http://api.twitter.com/1/statuses/home_timeline.json',
