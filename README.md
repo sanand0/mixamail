@@ -11,6 +11,7 @@ All access is controlled via emails to [twitter@mixamail.com](mailto:twitter@mix
 - *like: <status>* favorites the status
 - *subscribe* acts like a daily *fetch* at the time the mail is sent
 - *unsubscribe* cancels *subscribe*
+- *google <search-terms>* searches for search terms
 
 The code is almost entirely in main.py.
 
@@ -18,13 +19,13 @@ References
 ----------
 - [Mixamail.com](http://www.mixamail.com/)
 - [Blog post announcing the site](http://www.s-anand.net/blog/twitter-via-e-mail/)
+- [Blog post announcing Google search](http://www.s-anand.net/blog/google-search-via-e-mail/)
 
 Planned development
 -------------------
 - facebook@mixamail.com fetches Facebook feeds
 - read@mixamail.com response with the [readability](http://lab.arc90.com/experiments/readability/) equivalent of a page
 - D: <username> sends a direct message to username
-- Upload pictures
 - Search subscriptions
 - modified retweets
 - embedded profile images?
