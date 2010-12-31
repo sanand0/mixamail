@@ -220,6 +220,7 @@ class MailPage(InboundMailHandler):
         command, param, body = self.parse_cmd(message)
         try:
             if       command == 'search'        : self.search(param or body)
+            elif     command == 'google'        : self.google(param or body)
             elif self.mapping:
                 if   command == 'update'        : self.update(param or body)
                 elif command == 'reply'         : self.update(body, id=param)
@@ -227,15 +228,16 @@ class MailPage(InboundMailHandler):
                 elif command == 'retweet'       : self.retweet(body, id=param)
                 elif command == 'rt'            : self.retweet(body, id=param)
                 elif command == 'like'          : self.like(body, id=param)
-                elif command == 'google'        : self.google(param or body)
                 elif command == 'subscribe'     : self.subscribe()
                 elif command == 'unsubscribe'   : self.unsubscribe()
                 else                            : self.fetch()
-            else                                : self.reply_template('unknown')
+            else:
+                self.reply_template('unknown', admin=True)
         except Exception, e:
-            logging.warn(traceback.format_exc(e))
+            logging.error(traceback.format_exc(e))
             self.reply_template('error', exception = repr(e),
-                error="Twitter didn't let us " + (command or 'fetch'))
+                error="Twitter didn't let us " + (command or 'fetch'),
+                admin=True)
 
     def reply_template(self, temp, **data):
         '''Send a reply based on a specified template, passing it optional data'''
@@ -264,7 +266,7 @@ class MailPage(InboundMailHandler):
         if html: out.html = html
         try: out.cc = self.message.cc
         except: pass
-        if config.admins: out.bcc = config.admins
+        if config.admins and data.has_key('admin'): out.bcc = config.admins
         out.send()
 
     def update(self, content, id=None):
