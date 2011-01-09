@@ -355,12 +355,12 @@ class MailPage(InboundMailHandler):
         hour = datetime.datetime.utcnow().hour
         self.mapping.subscribe = hour
         self.mapping.put()
-        self.reply_template('subscribe', hour=hour)
+        self.reply_template('subscribe', hour=hour, admin=True)
 
     def unsubscribe(self):
         self.mapping.subscribe = None
         self.mapping.put()
-        self.reply_template('unsubscribe')
+        self.reply_template('unsubscribe', admin=True)
 
     def google(self, content):
         data = urlfetch.fetch('http://ajax.googleapis.com/ajax/services/search/web?' +
