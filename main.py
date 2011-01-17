@@ -239,6 +239,14 @@ class MailPage(InboundMailHandler):
                 error="Twitter didn't let us " + (command or 'fetch'),
                 admin=True)
 
+    def twitter_error(self, response):
+        logging.debug(response.content)
+        try:    data = json.loads(response.content)
+        except: data = {}
+        self.reply_template('error',
+            error="Twitter said: " + data.get('error', 'nothing'),
+            admin=True)
+
     def reply_template(self, temp, **data):
         '''Send a reply based on a specified template, passing it optional data'''
         handler = self
@@ -299,24 +307,24 @@ class MailPage(InboundMailHandler):
             'http://api.twitter.com/1/statuses/update.json',
             self.user.token, self.user.secret, protected=True, method='POST',
             additional_params = params)
-        if response.status_code != 200: logging.debug(response.content)
-        self.reply_template('timeline', feed=extend([json.loads(response.content)]))
+        if response.status_code != 200: self.twitter_error(response)
+        else: self.reply_template('timeline', feed=extend([json.loads(response.content)]))
 
     def retweet(self, content, id):
         if not id: return
         response = client.make_request(
             'http://api.twitter.com/1/statuses/retweet/%s.json' % id,
             self.user.token, self.user.secret, protected=True, method='POST')
-        if response.status_code != 200: logging.debug(response.content)
-        self.reply_template('timeline', feed=extend([json.loads(response.content)]))
+        if response.status_code != 200: self.twitter_error(response)
+        else: self.reply_template('timeline', feed=extend([json.loads(response.content)]))
 
     def like(self, content, id):
         if not id: return
         response = client.make_request(
             'http://api.twitter.com/1/favorites/create/%s.json' % id,
             self.user.token, self.user.secret, protected=True, method='POST')
-        if response.status_code != 200: logging.debug(response.content)
-        self.reply_template('timeline', feed=extend([json.loads(response.content)]))
+        if response.status_code != 200: self.twitter_error(response)
+        else: self.reply_template('timeline', feed=extend([json.loads(response.content)]))
 
     def fetch(self):
         params = { 'count': 100 }
