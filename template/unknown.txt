@@ -2,11 +2,11 @@ Hi {% firstof handler.from_name handler.from_mail %},
 
 You just mailed us. But we're not sure we've been introduced, so here goes: We're Mixamail.
 
-Mixamail lets you access Twitter via e-mail. This is useful if you have e-mail but not Internet access (e.g. on your BlackBerry).
+Mixamail lets you access Twitter via e-mail. This is useful if you have e-mail but not Internet access (e.g. on your BlackBerry, or if Twitter is blocked).
 
-You haven't yet logged in, but you can still search for public tweets. Mail twitter@mixamail.com with a subject "Search whatever-you-want". We'll reply with tweets mentioning whatever-you-want.
+First, you need to log in at http://www.mixamail.com and give {{ handler.from_mail }} access to your Twitter account. (Yes, this means you need to be able to access Twitter for the setup. Sorry.)
 
-But if you log in at http://www.mixamail.com and give {{ handler.from_mail }} access to your Twitter account, you can read and update tweets too.
+Once you're set up, you can read or update tweets from {{ handler.from_mail }}.
 
 Enjoy!
 Mixamail
