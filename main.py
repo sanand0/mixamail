@@ -1,6 +1,11 @@
 import os, os.path, re, cgi, urllib, datetime, logging, traceback, oauth, mimetypes, base64
-from email.utils import parseaddr, getaddresses, formataddr
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+from google.appengine.dist import use_library
+use_library('django', '0.96')
 from django.utils import simplejson as json
+
+from email.utils import parseaddr, getaddresses, formataddr
 from google.appengine.ext import webapp, db
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import login_required
@@ -199,7 +204,7 @@ class MailPage(InboundMailHandler):
         if not match: return (None,None,None)
         command, param = match.groups()
 
-        body = None
+        body = ''
         for content_type, body in message.bodies(content_type='text/plain'):
             for line in body.decode().split('\n'):
                 if line.strip():
