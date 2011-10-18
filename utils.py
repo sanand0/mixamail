@@ -2,7 +2,7 @@
 shrink(text, size): shrinks text to size, using URL shortening, word substitution, etc.
 extend(feed): extends feed with more attributes
 '''
-import re, urllib
+import re, urllib, logging
 try: import secret_config as config
 except: import config
 
@@ -108,6 +108,11 @@ def extend(feed):
     now = time.time()
     parser = TwitterParser(config.sender_mail, max_url_length=140)
     for entry in feed:
+        if isintance(entry, str):
+            logging.error('Entry is not a dict, but is a string: ' + entry)
+            logging.error('Feed is: ' + repr(feed))
+            break
+
         # Add ['ago'] as the relative date
         t = rfc822.parsedate(entry['created_at'])
         d = now - time.mktime(t)
