@@ -108,7 +108,7 @@ def extend(feed):
     now = time.time()
     parser = TwitterParser(config.sender_mail, max_url_length=140)
     for entry in feed:
-        if isintance(entry, str):
+        if isinstance(entry, str):
             logging.error('Entry is not a dict, but is a string: ' + entry)
             logging.error('Feed is: ' + repr(feed))
             break
