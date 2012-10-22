@@ -108,13 +108,14 @@ def extend(feed):
     now = time.time()
     parser = TwitterParser(config.sender_mail, max_url_length=140)
     for entry in feed:
-        if isinstance(entry, str):
-            logging.error('Entry is not a dict, but is a string: ' + entry)
-            logging.error('Feed is: ' + repr(feed))
+        # Add ['ago'] as the relative date
+        try:
+            t = rfc822.parsedate(entry['created_at'])
+        except TypeError:
+            logging.error('entry: ' + repr(entry))
+            logging.error('feed:  ' + repr(feed))
             break
 
-        # Add ['ago'] as the relative date
-        t = rfc822.parsedate(entry['created_at'])
         d = now - time.mktime(t)
         if   d < 90     : entry['ago'] = '%.0fsec' % d
         elif d < 5400   : entry['ago'] = '%.0fmin' % (d/60)

@@ -249,7 +249,7 @@ class MailPage(InboundMailHandler):
         try:    data = json.loads(response.content)
         except: data = {}
         self.reply_template('error',
-            error="Twitter said: " + data.get('error', 'nothing'),
+            error=str(response.status_code) + ": Twitter said: " + data.get('error', 'nothing'),
             admin=True)
 
     def reply_template(self, temp, **data):
@@ -262,9 +262,13 @@ class MailPage(InboundMailHandler):
         except: sub = ''
         if not re.match(r're\W', sub, re.IGNORECASE): sub = 'Re: ' + sub
 
+        # Reply to the sender and everyone in the to list
+        # except the sender, and anyone at mixamail.com, or even appspot
         to_list = [formataddr((name, email)) for name, email in
                     getaddresses([self.message.sender] + [self.message.to])
-                    if not email.lower() == config.sender_mail.lower()]
+                    if not email.lower() == config.sender_mail.lower()
+                    and not email.lower().endswith('mixamail.com')
+                    and not email.lower().endswith('appspotmail.com')]
 
         # Log the e-mail and intended output
         logging.info(repr([self.message.sender, to_list, sub, body,
@@ -338,12 +342,14 @@ class MailPage(InboundMailHandler):
             'http://api.twitter.com/1/statuses/home_timeline.json',
             self.user.token, self.user.secret, protected=True,
             additional_params = params)
-        feed = extend(json.loads(response.content))
-        self.reply_template('timeline', feed=feed)
-        if len(feed) > 0:
-            self.mapping.last_id = feed[0]['id']
-            self.mapping.last_fetch = datetime.datetime.utcnow()
-            self.mapping.put()
+        if response.status_code != 200: self.twitter_error(response)
+        else:
+            feed = extend(json.loads(response.content))
+            self.reply_template('timeline', feed=feed)
+            if len(feed) > 0:
+                self.mapping.last_id = feed[0]['id']
+                self.mapping.last_fetch = datetime.datetime.utcnow()
+                self.mapping.put()
 
     def search(self, content):
         # Make an authorised search request where possible
