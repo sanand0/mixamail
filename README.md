@@ -1,3 +1,5 @@
+NOTE: Mixamail.com will be shut down on Thu 25 Oct, 2012. See http://s-anand.net/mixamail.html
+
 Introduction
 ------------
 This is the source for [Mixamail.com](http://www.mixamail.com/) -- an e-mail gateway to [Twitter](http://twitter.com/).
@@ -21,7 +23,7 @@ References
 - [Blog post announcing the site](http://www.s-anand.net/blog/twitter-via-e-mail/)
 - [Blog post announcing Google search](http://www.s-anand.net/blog/google-search-via-e-mail/)
 
-Planned development
+Planned development (inactive)
 -------------------
 - facebook@mixamail.com fetches Facebook feeds
 - read@mixamail.com response with the [readability](http://lab.arc90.com/experiments/readability/) equivalent of a page
@@ -29,4 +31,3 @@ Planned development
 - Search subscriptions
 - modified retweets
 - embedded profile images?
-
