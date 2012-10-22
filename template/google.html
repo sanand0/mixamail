@@ -1,3 +1,5 @@
+<p>NOTE: Mixamail.com <a href="http://s-anand.net/mixamail.html">will be shut down on Thu 25 Oct, 2012</a></p>
+
 {% if not data.feed.responseData.results %}<p>No search results.</p>{% else %}{% for entry in data.feed.responseData.results %}
 <p><em>{{ entry.title }}</em>: {{ entry.content }} <a href="{{ entry.url }}">{{ entry.visibleUrl }}</a></p>
 {% endfor %}{% endif %}

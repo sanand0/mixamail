@@ -1,3 +1,5 @@
+<p>NOTE: Mixamail.com <a href="http://s-anand.net/mixamail.html">will be shut down on Thu 25 Oct, 2012</a></p>
+
 {% if not data.feed %}<p>No new tweets since our last e-mail.</p>{% else %}{% for entry in data.feed %}
 <p><a href="http://twitter.com/{% firstof entry.user.screen_name entry.from_user %}">{% firstof entry.user.name entry.from_user %}</a>: {{ entry.html }}
 <i>{{ entry.ago }}</i>
@@ -6,6 +8,7 @@
 <a href="mailto:twitter@mixamail.com?subject=RT:%20{{entry.id}}">retweet</a>
 </p>
 {% endfor %}{% endif %}
+
 
 <p>Twitter by mail:
 <a href="mailto:twitter@mixamail.com?subject=update">update</a> |

@@ -2,3 +2,5 @@
 
 You can e-mail twitter@mixamail.com with a subject: update / fetch / search / google / subscribe / unsubscribe.
 For update and search, type the content in the body of the mail.
+
+NOTE: Mixamail.com will be shut down on Thu 25 Oct, 2012. See http://s-anand.net/mixamail.html
